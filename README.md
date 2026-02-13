@@ -2,11 +2,6 @@
 
 Projeto desenvolvido em Spring Boot para gerenciamento de Orçamentos e Medições.
 
-## Regras de negócio
-
-- Não é permitido editar orçamento com status FINALIZADO.
-- Orçamento pode ser finalizado via endpoint PUT /orcamentos/{id}/finalizar.
-
 ## Tecnologias Utilizadas
 
 - Java 21
@@ -36,3 +31,23 @@ Entrar no PostgreSQL:
 
 ```bash
 psql -U postgres
+```
+
+Executar script de criação das tabelas:
+
+```bash
+psql -U postgres -d orcamento_db -f sql/db.sql
+```
+
+Rodar aplicação:
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+Acessar documentação Swagger:
+
+```bash
+http://localhost:8080/swagger-ui/index.html
+```

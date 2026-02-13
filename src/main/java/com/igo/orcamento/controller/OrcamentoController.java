@@ -2,10 +2,14 @@ package com.igo.orcamento.presentation.controller;
 
 import com.igo.orcamento.domain.enums.StatusOrcamento;
 import com.igo.orcamento.domain.model.Orcamento;
+import com.igo.orcamento.domain.model.ItemOrcamento;
 import com.igo.orcamento.infra.repository.OrcamentoRepository;
+import com.igo.orcamento.infra.repository.ItemOrcamentoRepository;
 import com.igo.orcamento.presentation.dto.OrcamentoRequest;
-import org.springframework.web.bind.annotation.*;
 import com.igo.orcamento.app.exception.OrcamentoException;
+import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,9 +19,12 @@ import java.util.List;
 public class OrcamentoController {
 
     private final OrcamentoRepository repository;
+    private final ItemOrcamentoRepository itemRepository;
 
-    public OrcamentoController(OrcamentoRepository repository) {
+    public OrcamentoController(OrcamentoRepository repository,
+                               ItemOrcamentoRepository itemRepository) {
         this.repository = repository;
+        this.itemRepository = itemRepository;
     }
 
     @PostMapping
@@ -54,13 +61,11 @@ public class OrcamentoController {
 
     @PutMapping("/{id}/finalizar")
     public Orcamento finalizar(@PathVariable Long id) {
-
+        
         Orcamento orcamento = repository.findById(id)
-                .orElseThrow(() -> new OrcamentoException("Orçamento não encontrado"));
+            .orElseThrow(() -> new OrcamentoException("Orçamento não encontrado"));
 
-        if (orcamento.getStatus() == StatusOrcamento.FINALIZADO) {
-            throw new OrcamentoException("Orçamento já está finalizado");
-        }
+        validarFinalizacao(orcamento);
 
         orcamento.setStatus(StatusOrcamento.FINALIZADO);
 
@@ -84,4 +89,29 @@ public class OrcamentoController {
         return repository.save(orcamento);
     }
 
+    private void validarFinalizacao(Orcamento orcamento) {
+
+        if (orcamento.getStatus() == StatusOrcamento.FINALIZADO) {
+            throw new OrcamentoException("Orçamento já está finalizado");
+        }
+
+        List<ItemOrcamento> itens =
+                itemRepository.findByOrcamentoId(orcamento.getId());
+
+        if (itens.isEmpty()) {
+            throw new OrcamentoException("Não é possível finalizar orçamento sem itens");
+        }
+
+        BigDecimal somaItens =
+                itemRepository.somarValorTotalPorOrcamento(orcamento.getId());
+
+        if (somaItens.compareTo(orcamento.getValorTotal()) != 0) {
+            throw new OrcamentoException(
+                    "A soma dos itens deve ser exatamente igual ao valor total do orçamento"
+            );
+        }
+    }
+
 }
+
+
