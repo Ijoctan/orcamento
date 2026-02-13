@@ -2,6 +2,11 @@
 
 Projeto desenvolvido em Spring Boot para gerenciamento de Orçamentos e Medições.
 
+## Regras de negócio
+
+- Não é permitido editar orçamento com status FINALIZADO.
+- Orçamento pode ser finalizado via endpoint PUT /orcamentos/{id}/finalizar.
+
 ## Tecnologias Utilizadas
 
 - Java 21
