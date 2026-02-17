@@ -58,6 +58,18 @@ public class ItemOrcamentoController {
         return itemRepository.findByOrcamentoId(orcamentoId);
     }
 
+    @GetMapping("/{itemId}")
+    public ItemOrcamento buscarPorId(@PathVariable Long orcamentoId,
+                                    @PathVariable Long itemId) {
+
+        buscarOrcamentoOuFalhar(orcamentoId);
+
+        return itemRepository.findByIdAndOrcamentoId(itemId, orcamentoId)
+                .orElseThrow(() ->
+                        new OrcamentoException("Item do orçamento não encontrado"));
+    }
+
+
     @PutMapping("/{itemId}")
     public ItemOrcamento editar(@PathVariable Long orcamentoId,
                                 @PathVariable Long itemId,
@@ -86,6 +98,20 @@ public class ItemOrcamentoController {
 
         return itemRepository.save(itemExistente);
     }
+
+    @DeleteMapping("/{itemId}")
+    public void excluir(@PathVariable Long orcamentoId,
+                        @PathVariable Long itemId) {
+
+        Orcamento orcamento = buscarOrcamentoOuFalhar(orcamentoId);
+        validarOrcamentoAberto(orcamento);
+
+        ItemOrcamento item = itemRepository.findByIdAndOrcamentoId(itemId, orcamentoId)
+                .orElseThrow(() -> new OrcamentoException("Item do orçamento não encontrado"));
+
+        itemRepository.delete(item);
+    }
+
 
     private Orcamento buscarOrcamentoOuFalhar(Long orcamentoId) {
         return orcamentoRepository.findById(orcamentoId)
