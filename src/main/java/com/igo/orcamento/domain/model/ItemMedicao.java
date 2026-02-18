@@ -1,6 +1,4 @@
 package com.igo.orcamento.domain.model;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,12 +23,11 @@ public class ItemMedicao {
     @Column(nullable = false)
     private BigDecimal valorTotalMedido;
 
-    @JsonIgnore
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "medicao_id")
     private Medicao medicao;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "item_orcamento_id")
     private ItemOrcamento itemOrcamento;
 }

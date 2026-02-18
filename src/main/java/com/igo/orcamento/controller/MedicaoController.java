@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/orcamentos/{orcamentoId}/medicoes")
@@ -37,29 +38,34 @@ public class MedicaoController {
     }
 
     @GetMapping
-    public List<Medicao> listar(@PathVariable Long orcamentoId) {
+    public List<MedicaoResponse> listar(@PathVariable Long orcamentoId) {
 
         Orcamento orcamento = orcamentoRepository.findById(orcamentoId)
                 .orElseThrow(() -> new OrcamentoException("Orçamento não encontrado"));
 
-        return medicaoRepository.findByOrcamentoId(orcamento.getId());
+        return medicaoRepository.findByOrcamentoId(orcamento.getId())
+                .stream()
+                .map(this::converterParaResponse)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{medicaoId}")
-    public Medicao buscarPorId(@PathVariable Long orcamentoId,
+    public MedicaoResponse buscarPorId(@PathVariable Long orcamentoId,
                             @PathVariable Long medicaoId) {
 
         orcamentoRepository.findById(orcamentoId)
                 .orElseThrow(() -> new OrcamentoException("Orçamento não encontrado"));
 
-        return medicaoRepository.findById(medicaoId)
+        Medicao medicao = medicaoRepository.findById(medicaoId)
                 .filter(m -> m.getOrcamento().getId().equals(orcamentoId))
                 .orElseThrow(() -> new OrcamentoException("Medição não encontrada"));
+        
+        return converterParaResponse(medicao);
     }
 
     @Transactional
     @PostMapping
-    public Medicao criar(@PathVariable Long orcamentoId,
+    public MedicaoResponse criar(@PathVariable Long orcamentoId,
                          @RequestBody MedicaoRequest request) {
 
         Orcamento orcamento = orcamentoRepository.findById(orcamentoId)
@@ -127,12 +133,13 @@ public class MedicaoController {
         }
 
         medicao.setValorTotal(valorTotalMedicao);
+        medicao = medicaoRepository.save(medicao);
 
-        return medicaoRepository.save(medicao);
+        return converterParaResponse(medicao);
     }
 
     @PutMapping("/{medicaoId}/validar")
-    public Medicao validar(@PathVariable Long orcamentoId,
+    public MedicaoResponse validar(@PathVariable Long orcamentoId,
                         @PathVariable Long medicaoId) {
 
         Orcamento orcamento = orcamentoRepository.findById(orcamentoId)
@@ -172,12 +179,51 @@ public class MedicaoController {
         }
 
         medicao.setStatus(StatusMedicao.VALIDADA);
+        medicao = medicaoRepository.save(medicao);
 
-        return medicaoRepository.save(medicao);
+        return converterParaResponse(medicao);
     }
 
+    private MedicaoResponse converterParaResponse(Medicao medicao) {
+        List<ItemMedicaoResponse> itensResponse = medicao.getItens() != null
+                ? medicao.getItens().stream()
+                        .map(this::converterItemParaResponse)
+                        .collect(Collectors.toList())
+                : List.of();
+
+        return new MedicaoResponse(
+                medicao.getId(),
+                medicao.getNumeroMedicao(),
+                medicao.getDataMedicao(),
+                medicao.getValorTotal(),
+                medicao.getStatus(),
+                medicao.getObservacao(),
+                itensResponse
+        );
+    }
+
+    private ItemMedicaoResponse converterItemParaResponse(ItemMedicao itemMedicao) {
+        ItemOrcamento itemOrcamento = itemMedicao.getItemOrcamento();
+        
+        ItemOrcamentoDetalhado itemDetalhado = new ItemOrcamentoDetalhado(
+                itemOrcamento.getId(),
+                itemOrcamento.getDescricao(),
+                itemOrcamento.getQuantidade(),
+                itemOrcamento.getValorUnitario(),
+                itemOrcamento.getValorTotal(),
+                itemOrcamento.getQuantidadeAcumulada()
+        );
+
+        return new ItemMedicaoResponse(
+                itemMedicao.getId(),
+                itemMedicao.getQuantidadeMedida(),
+                itemMedicao.getValorTotalMedido(),
+                itemDetalhado
+        );
+    }
 
     private String gerarNumeroMedicao() {
         return "MED-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }
+

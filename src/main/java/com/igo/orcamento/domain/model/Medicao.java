@@ -43,7 +43,6 @@ public class Medicao {
     @JoinColumn(name = "orcamento_id")
     private Orcamento orcamento;
 
-    @OneToMany(mappedBy = "medicao", cascade = CascadeType.ALL)
-    @JsonIgnore
+    @OneToMany(mappedBy = "medicao", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<ItemMedicao> itens;
 }
