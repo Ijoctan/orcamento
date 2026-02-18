@@ -12,11 +12,33 @@
 CREATE TABLE IF NOT EXISTS orcamentos (
     id BIGSERIAL PRIMARY KEY,
     numero_protocolo VARCHAR(30) UNIQUE,
-    tipo_orcamento VARCHAR(100) NOT NULL,
+    tipo_orcamento_id BIGINT NOT NULL,
     valor_total NUMERIC(15,2) NOT NULL,
     data_criacao DATE NOT NULL,
-    status VARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL,
+
+    CONSTRAINT fk_orcamento_tipo
+        FOREIGN KEY (tipo_orcamento_id)
+        REFERENCES tipo_orcamento(id)
 );
+
+-- ==============================
+-- Tabela: tipo_orcamento
+-- ==============================
+
+CREATE TABLE IF NOT EXISTS tipo_orcamento (
+    id BIGSERIAL PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    descricao VARCHAR(150) NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+INSERT INTO tipo_orcamento (codigo, descricao) 
+    VALUES  ('OUTROS', 'Outros'), 
+            ('OBRA_EDIFICAO', 'Obra de Edificação'), 
+            ('OBRA_RODOVIARIAS', 'Obra de Rodovias'), 
+            ('OBRA_PARTICULAR', 'Obra Particular'), 
+            ('OBRA_PUBLICA', 'Obra Publica');
 
 -- ==============================
 -- Tabela: itens_orcamento

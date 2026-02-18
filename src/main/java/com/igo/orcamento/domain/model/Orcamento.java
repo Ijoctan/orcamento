@@ -23,8 +23,9 @@ public class Orcamento {
     @Column(name = "numero_protocolo", unique = true)
     private String numeroProtocolo;
 
-    @Column(name = "tipo_orcamento", nullable = false)
-    private String tipoOrcamento;
+    @ManyToOne
+    @JoinColumn(name = "tipo_orcamento_id", nullable = false)
+    private TipoOrcamento tipoOrcamento;
 
     @Column(name = "valor_total", nullable = false)
     private BigDecimal valorTotal;

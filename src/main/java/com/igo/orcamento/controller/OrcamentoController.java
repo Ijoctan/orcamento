@@ -1,10 +1,12 @@
-package com.igo.orcamento.presentation.controller;
+package com.igo.orcamento.controller;
 
 import com.igo.orcamento.domain.enums.StatusOrcamento;
 import com.igo.orcamento.domain.model.Orcamento;
 import com.igo.orcamento.domain.model.ItemOrcamento;
+import com.igo.orcamento.domain.model.TipoOrcamento;
 import com.igo.orcamento.infra.repository.OrcamentoRepository;
 import com.igo.orcamento.infra.repository.ItemOrcamentoRepository;
+import com.igo.orcamento.infra.repository.TipoOrcamentoRepository;
 import com.igo.orcamento.presentation.dto.OrcamentoRequest;
 import com.igo.orcamento.app.exception.OrcamentoException;
 import org.springframework.web.bind.annotation.*;
@@ -20,17 +22,24 @@ public class OrcamentoController {
 
     private final OrcamentoRepository repository;
     private final ItemOrcamentoRepository itemRepository;
+    private final TipoOrcamentoRepository tipoOrcamentoRepository;
 
     public OrcamentoController(OrcamentoRepository repository,
-                               ItemOrcamentoRepository itemRepository) {
+                               ItemOrcamentoRepository itemRepository,
+                               TipoOrcamentoRepository tipoOrcamentoRepository) {
         this.repository = repository;
         this.itemRepository = itemRepository;
+        this.tipoOrcamentoRepository = tipoOrcamentoRepository;
     }
 
     @PostMapping
     public Orcamento criar(@RequestBody OrcamentoRequest request) {
+
+        TipoOrcamento tipo = tipoOrcamentoRepository.findById(request.tipoOrcamentoId())
+            .orElseThrow(() -> new OrcamentoException("Tipo de orçamento inválido"));
+
         Orcamento orcamento = Orcamento.builder()
-                .tipoOrcamento(request.tipoOrcamento())
+                .tipoOrcamento(tipo)    
                 .valorTotal(request.valorTotal())
                 .dataCriacao(LocalDate.now())
                 .status(StatusOrcamento.ABERTO)
@@ -83,7 +92,11 @@ public class OrcamentoController {
             throw new OrcamentoException("Não é permitido editar orçamento finalizado");
         }
 
-        orcamento.setTipoOrcamento(request.tipoOrcamento());
+        TipoOrcamento tipo = tipoOrcamentoRepository.findById(request.tipoOrcamentoId())
+            .orElseThrow(() -> new OrcamentoException("Tipo de orçamento inválido"));
+
+        orcamento.setTipoOrcamento(tipo);
+
         orcamento.setValorTotal(request.valorTotal());
 
         return repository.save(orcamento);
@@ -105,11 +118,14 @@ public class OrcamentoController {
         BigDecimal somaItens =
                 itemRepository.somarValorTotalPorOrcamento(orcamento.getId());
 
+        if (somaItens == null) somaItens = BigDecimal.ZERO;
+
         if (somaItens.compareTo(orcamento.getValorTotal()) != 0) {
             throw new OrcamentoException(
                     "A soma dos itens deve ser exatamente igual ao valor total do orçamento"
             );
         }
+        
     }
 
 }

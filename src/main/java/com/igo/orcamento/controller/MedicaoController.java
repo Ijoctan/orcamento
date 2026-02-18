@@ -1,4 +1,4 @@
-package com.igo.orcamento.presentation.controller;
+package com.igo.orcamento.controller;
 
 import com.igo.orcamento.app.exception.OrcamentoException;
 import com.igo.orcamento.domain.enums.StatusMedicao;
